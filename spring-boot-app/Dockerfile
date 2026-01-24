@@ -1,4 +1,4 @@
-FROM maven:3.8.7-openjdk-11 AS builder
+FROM maven:3.8.7-openjdk-11-slim AS builder
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
