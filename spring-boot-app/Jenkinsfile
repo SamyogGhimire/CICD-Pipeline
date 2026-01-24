@@ -11,17 +11,21 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                sh 'mvn clean package'
+                dir('spring-boot-app') {
+                    sh 'mvn clean package'
+                }
             }
         }
 
         stage('Build & Push Docker Image') {
             steps {
                 script {
-                    def img = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
-                    docker.withRegistry('', REGISTRY_CREDENTIALS) {
-                        img.push()
-                        img.push('latest')
+                    dir('spring-boot-app') {
+                        def img = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                        docker.withRegistry('', REGISTRY_CREDENTIALS) {
+                            img.push()
+                            img.push('latest')
+                        }
                     }
                 }
             }
@@ -34,9 +38,9 @@ pipeline {
                     git config user.name "SamyogGhimire"
 
                     sed -i 's|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|g' \
-                        ../k8s-app-manifests/deployment.yaml
+                        k8s-app-manifests/deployment.yaml
 
-                    git add ../k8s-app-manifests/deployment.yaml
+                    git add k8s-app-manifests/deployment.yaml
                     git commit -m "Update image to ${IMAGE_NAME}:${IMAGE_TAG}"
                     git push https://github.com/SamyogGhimire/CICD-Pipeline.git
                 """
