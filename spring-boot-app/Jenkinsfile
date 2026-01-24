@@ -43,7 +43,7 @@ pipeline {
 
                     git add k8s-app-manifests/deployment.yaml
                     git commit -m "Update image to ${IMAGE_NAME}:${IMAGE_TAG}"
-                    git push https://github.com/SamyogGhimire/CICD-Pipeline.git
+                    git push https://github.com/SamyogGhimire/CICD-Pipeline.git HEAD:main
                 """
             }
         }
