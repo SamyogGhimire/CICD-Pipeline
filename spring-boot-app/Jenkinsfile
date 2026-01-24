@@ -1,0 +1,47 @@
+pipeline{
+    agent{
+        docker{
+            image 'samyogg/java-cicd-pipeline:v1'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+    stages{
+        stage('Build and Test'){
+            steps{
+                cd 'spring-boot-app'{
+                    sh 'mvn clean package' // Delete old builds, rebuild the project from scratch, run tests, and create the final artifact.
+                }
+            }
+        }
+        stage('Build Docker Image'){
+            environment{
+                IMAGE_NAME = 'samyogg/java-cicd-pipeline:v1'
+                REGISTRY_CREDENTIALS = 'dockerhub-samyogg'
+            }
+            steps{
+                sh 'docker build -t $IMAGE_NAME .'
+                def dockerImage = docker.image("$IMAGE_NAME")
+                docker.withRegistry('', "$REGISTRY_CREDENTIALS"){
+                    dockerImage.push()
+                }
+            }
+        }
+        stage ('Update Deployment File') {
+            environment {
+                GIT_REPO_NAME = 'CICD-Pipeline'
+                GIT_USER_NAME = 'SamyogGhimire'
+            }
+            steps {
+                sh '''
+                    git config user.email "samyog.ghimire25@gmail.com"
+                    git config user.name "$GIT_USER_NAME"
+                    BUILD_NUMBER = "${BUILD_NUMBER}"
+                    sed -i "s|image: .*|image: samyogg/java-cicd-pipeline:v1|g" k8s-app-manifests/deployment.yaml
+                    git add k8s-app-manifests/deployment.yaml
+                    git commit -m "Updated deployment image to samyogg/java-cicd-pipeline:v1 for build number $BUILD_NUMBER"
+                    git push https://github.com/$GIT_USER_NAME}/$GIT_REPO_NAME}
+                '''
+            }
+        }
+    }
+}
