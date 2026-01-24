@@ -1,0 +1,8 @@
+target/
+.git/
+.gitignore
+README.md
+cicd-architecture.png
+node_modules/
+*.log
+*.tmp
