@@ -21,15 +21,16 @@ pipeline {
             steps {
                 script {
                     dir('spring-boot-app') {
-                        def img = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
-                        docker.withRegistry('', REGISTRY_CREDENTIALS) {
-                            img.push()
-                            img.push('latest')
-                        }
-                    }
+                    docker.withRegistry('', REGISTRY_CREDENTIALS) {
+                    def img = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                    img.push()
+                    img.push('latest')
                 }
             }
         }
+    }
+}
+
 
         stage('Update Kubernetes Deployment') {
             steps {
