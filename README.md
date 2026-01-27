@@ -4,7 +4,6 @@
 - Jenkins
 - Git/GitHub
 - Maven
-- SonarQube
 - Docker
 - ArgoCD (GitOps)
 - Helm
@@ -43,32 +42,26 @@ Argo Image Updater detects a new image and updates Git. ArgoCD watches Git and d
 
 ---
 
-#### 5. **SonarQube Code Quality Check**
-- If the Maven build is successful, SonarQube analyzes the code against compliance, quality, and security rules.
-- If the code does not meet quality standards, Jenkins sends an email notification and halts the pipeline.
-
----
-
-#### 6. **Docker Image Build & Push**
-- If SonarQube passes, Jenkins builds a Docker image of the application.
+#### 5. **Docker Image Build & Push**
+- If test passes, Jenkins builds a Docker image of the application.
 - The image is tagged and pushed to the container registry (e.g., Docker Hub or private registry).
 
 ---
 
-#### 7. **Argo Image Updater Updates Git**
+#### 6. **Argo Image Updater Updates Git**
 - Argo Image Updater detects the new Docker image and updates the image tag in the Kubernetes manifests repository.
 - This commit ensures Git remains the single source of truth.
 
 ---
 
-#### 8. **ArgoCD Deploys to Kubernetes** 
+#### 7. **ArgoCD Deploys to Kubernetes** 
 - Runs inside the Kubernetes cluster.
 - ArgoCD continuously monitors the manifests repository.
 - Upon detecting the updated image tag, ArgoCD synchronizes the manifests with the Kubernetes cluster, deploying the new version automatically.
 
 ---
 
-#### 9. **Audit & Rollback**
+#### 8. **Audit & Rollback**
 - Every change is tracked in Git, allowing auditable deployments.
 - If a problem occurs, rolling back is as simple as reverting the Git commit, which ArgoCD automatically applies to the cluster.
 
