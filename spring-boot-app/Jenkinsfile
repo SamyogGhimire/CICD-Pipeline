@@ -17,18 +17,13 @@ pipeline {
     }
 
     stage('Build & Test') {
-        steps {
-            dir('spring-boot-app') {
-            sh 'mvn clean package -DskipTests'
-            sh 'ls -lh target'
-            sh 'cp target/*.jar target/app.jar'
-            sh 'ls -lh target/app.jar'
-             }
+      steps {
+        dir('spring-boot-app') {
+          sh 'mvn clean package -DskipTests'
         }
+      }
     }
-
-
-
+    
     stage('Build Docker Image') {
       steps {
         script {
