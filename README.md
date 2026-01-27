@@ -6,63 +6,92 @@
 - Maven
 - Docker
 - ArgoCD (GitOps)
-- Helm
-- Kubernetes
+- Kubernetes (Minikube)
 
 ## Architecture
-![AWS-Terraform](./cicd-architecture.png)
+![Architecture](./images/Architecture.png)
 
 ## Description
 In this CI/CD Pipeline Project we use Jenkins for CI (Continuous Integration) and GitOps for CD (Continuous Delivery) of a java application. Application source code lives in Git repo and Kubernetes manifests live in another.
 Jenkins builds and pushes the image to a container registry using Docker.
 Argo Image Updater detects a new image and updates Git. ArgoCD watches Git and deploys changes to Kubernetes ensuring Git is always the source of truth.
 
-## Step By Step CICD Pipeline Flow
 
-#### 1. **Code Commit in Git**
-- Developers push changes to the application Git repository.
-- Git serves as the single source of truth for both application code and Kubernetes manifests.
+## CI/CD Pipeline Flow
 
----
-
-#### 2. **Trigger Jenkins via GitHub Webhook**
-- GitHub webhook triggers the Jenkins CI pipeline immediately after a commit, avoiding continuous polling.
+### 1. Code Commit  
+Developer pushes code changes to the GitHub repository.
 
 ---
 
-#### 3. **Jenkins Starts Pipeline (Declarative Jenkinsfile)**
-- The pipeline defined in the Declarative Jenkinsfile orchestrates all CI steps.
+### 2. GitHub Webhook Trigger  
+A GitHub webhook immediately notifies Jenkins about the new commit, avoiding continuous polling.
 
 ---
 
-#### 4. **Maven Build & Test**
-- Maven compiles the Java application and resolves dependencies.
-- Maven runs unit tests and performs static code analysis.
-- If Maven build fails, Jenkins sends an email notification to developers and stops the pipeline.
+### 3. Jenkins CI Pipeline  
+Jenkins starts the CI pipeline defined in the declarative `Jenkinsfile`.
 
 ---
 
-#### 5. **Docker Image Build & Push**
-- If test passes, Jenkins builds a Docker image of the application.
-- The image is tagged and pushed to the container registry (e.g., Docker Hub or private registry).
+### 4. Maven Build & Test  
+Jenkins runs Maven to:  
+- Compile the Spring Boot application  
+- Resolve dependencies  
+- Execute unit tests  
+If the build or tests fail, the pipeline stops.
 
 ---
 
-#### 6. **Argo Image Updater Updates Git**
-- Argo Image Updater detects the new Docker image and updates the image tag in the Kubernetes manifests repository.
-- This commit ensures Git remains the single source of truth.
+### 5. Docker Build & Push  
+Jenkins:  
+- Builds a Docker image for the application  
+- Tags it with the Jenkins build number  
+- Pushes the image to Docker Hub
 
 ---
 
-#### 7. **ArgoCD Deploys to Kubernetes** 
-- Runs inside the Kubernetes cluster.
-- ArgoCD continuously monitors the manifests repository.
-- Upon detecting the updated image tag, ArgoCD synchronizes the manifests with the Kubernetes cluster, deploying the new version automatically.
+### 6. Manifest Update (GitOps)  
+Jenkins updates the Kubernetes deployment manifest with the new Docker image tag and commits the change back to Git, keeping Git as the single source of truth.
 
 ---
 
-#### 8. **Audit & Rollback**
-- Every change is tracked in Git, allowing auditable deployments.
-- If a problem occurs, rolling back is as simple as reverting the Git commit, which ArgoCD automatically applies to the cluster.
+### 7. ArgoCD Sync  
+ArgoCD detects the updated manifest in Git and automatically syncs the changes to the Kubernetes cluster.
+
+---
+
+### 8. Deployment to Kubernetes  
+The new application version is rolled out to Minikube automatically using Kubernetes rolling updates.
+
+---
+
+### 9. Audit & Rollback  
+All deployment changes are tracked in Git.  
+If an issue occurs, rolling back is as simple as reverting a Git commit, and ArgoCD will automatically apply the previous state.
+
+---
+
+## Output Screenshot:
+
+### Jenkins Pipeline (Successful Build)
+![Jenkins Pipeline(Successful Build)](./images/Jenkins.png)
+
+### ArgoCD Application (Successful Sync)
+![ArgoCD Application](./images/ArgoCD.png)
+
+### Deployed Application (Minikube IP)
+![Deployed Application (Minikube IP)](./images/deployed.png)
+
+---
+
+## Key Learnings
+
+- End-to-end CI/CD automation  
+- GitOps with ArgoCD  
+- GitHub webhook–triggered Jenkins builds  
+- Docker image versioning best practices  
+- Automated Kubernetes rollouts  
+- Git-based audit & rollback  
 
 ---
