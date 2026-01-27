@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: spring-boot-app
-        image: samyogg/java-cicd-pipeline:1
+        image: samyogg/java-cicd-pipeline:35
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
