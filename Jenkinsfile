@@ -4,7 +4,7 @@ pipeline {
   environment {
     IMAGE_NAME = 'samyogg/java-cicd-pipeline'
     REGISTRY_CREDENTIALS = 'DockerHub'
-    GIT_CREDENTIALS_ID = 'a34f752b-8927-4582-92c1-89cd8b113ce5'
+    GIT_CREDENTIALS_ID = 'GithubToken'
     MANIFEST_FILE = 'k8s-app-manifests/deployment.yaml'
   }
 
