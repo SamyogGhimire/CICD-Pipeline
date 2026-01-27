@@ -1,10 +1,10 @@
-FROM maven:3.9.3-eclipse-temurin-11 AS builder
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package
+FROM adoptopenjdk/openjdk11:alpine-jre
 
-FROM eclipse-temurin:11-jre-alpine
+# Simply the artifact path
+ARG artifact=target/spring-boot-web.jar
+
 WORKDIR /opt/app
-COPY --from=builder /app/target/spring-boot-web.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+COPY ${artifact} app.jar
+
+ENTRYPOINT ["java","-jar","app.jar"]
