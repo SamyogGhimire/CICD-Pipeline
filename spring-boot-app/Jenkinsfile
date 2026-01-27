@@ -1,63 +1,77 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        IMAGE_NAME = 'samyogg/java-cicd-pipeline'
-        IMAGE_TAG  = "${BUILD_NUMBER}"
-        REGISTRY_CREDENTIALS = 'dockerhub-samyogg'
+  environment {
+    IMAGE_NAME = 'samyogg/java-cicd-pipeline'
+    REGISTRY_CREDENTIALS = 'dockerhub-samyogg'
+    GIT_CREDENTIALS_ID = 'github-creds'
+    MANIFEST_FILE = 'k8s-app-manifests/deployment.yaml'
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
     }
 
-    stages {
-
-        stage('Build & Test') {
-            steps {
-                dir('spring-boot-app') {
-                    sh 'mvn clean package'
-                }
-            }
-        }
-
-        stage('Build & Push Docker Image') {
-            steps {
-                script {
-                    dir('spring-boot-app') {
-                    docker.withRegistry('', REGISTRY_CREDENTIALS) {
-                    def img = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
-                    img.push()
-                    img.push('latest')
-                }
-            }
-        }
-    }
-}
-
-
-        stage('Update Kubernetes Deployment') {
-    environment {
-        GIT_REPO_NAME = 'CICD-Pipeline'
-        GITHUB_USER = 'SamyogGhimire'
-        GITHUB_TOKEN = credentials('a34f752b-8927-4582-92c1-89cd8b113ce5') // GitHub PAT
-    }
-    steps {
+    stage('Build & Test') {
+      steps {
         dir('spring-boot-app') {
-            sh '''
-                # Configure git
-                git config user.email "samyog.ghimire25@gmail.com"
-                git config user.name "$GITHUB_USER"
-
-                # Update deployment file with new image
-                sed -i "s|image: .*|image: samyogg/java-cicd-pipeline:v1|g" ../k8s-app-manifests/deployment.yaml
-
-                # Stage and commit changes
-                git add ../k8s-app-manifests/deployment.yaml
-                git commit -m "Updated deployment image to samyogg/java-cicd-pipeline:v1 for build number $BUILD_NUMBER"
-
-                # Push changes to GitHub using PAT (non-interactive)
-                git push https://$GITHUB_USER:$GITHUB_TOKEN@github.com/$GITHUB_USER/$GIT_REPO_NAME.git HEAD:main
-            '''
+          sh 'mvn clean package -DskipTests'
         }
+      }
     }
-}
 
+    stage('Build Docker Image') {
+      steps {
+        script {
+          IMAGE_TAG = "${BUILD_NUMBER}"
+          sh "docker build -t $IMAGE_NAME:$IMAGE_TAG spring-boot-app"
+        }
+      }
     }
+
+    stage('Push Docker Image') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: REGISTRY_CREDENTIALS,
+          usernameVariable: 'DOCKER_USER',
+          passwordVariable: 'DOCKER_PASS'
+        )]) {
+          sh """
+            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+            docker push $IMAGE_NAME:${BUILD_NUMBER}
+          """
+        }
+      }
+    }
+
+    stage('Update Kubernetes Deployment') {
+      steps {
+        sh """
+          sed -i 's|image: .*|image: $IMAGE_NAME:${BUILD_NUMBER}|' $MANIFEST_FILE
+        """
+      }
+    }
+
+    stage('Commit & Push Manifest') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: GIT_CREDENTIALS_ID,
+          usernameVariable: 'GIT_USER',
+          passwordVariable: 'GIT_PASS'
+        )]) {
+          sh """
+            git config user.email "jenkins@ci.local"
+            git config user.name "jenkins"
+            git add $MANIFEST_FILE
+            git commit -m "Update image to $IMAGE_NAME:${BUILD_NUMBER}"
+            git push https://$GIT_USER:$GIT_PASS@github.com/SamyogGhimire/CICD-Pipeline.git HEAD:main
+          """
+        }
+      }
+    }
+  }
 }
