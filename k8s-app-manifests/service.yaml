@@ -7,9 +7,8 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - name: http
-      port: 9000
-      targetPort: 9000
-      protocol: TCP
+  - port: 8080          # service port (inside cluster)
+    targetPort: 8080    # container port
+    nodePort: 31933     # external Minikube port
   selector:
     app: spring-boot-app
