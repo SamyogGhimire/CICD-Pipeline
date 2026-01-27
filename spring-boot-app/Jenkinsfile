@@ -23,7 +23,12 @@ pipeline {
         }
       }
     }
-
+    stage('Debug Jar') {
+    steps {
+        sh 'ls -lh spring-boot-app/target'
+      }
+    }
+    
     stage('Build Docker Image') {
       steps {
         script {
