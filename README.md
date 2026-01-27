@@ -106,3 +106,17 @@ If an issue occurs, rolling back is as simple as reverting a Git commit, and Arg
 - Git-based audit & rollback  
 
 ---
+
+## Docker Image
+
+The latest Docker image for this project is available on Docker Hub:
+
+```bash
+docker pull samyogg/java-cicd-pipeline:35
+```
+
+You can run it locally with:
+```bash
+docker run -p 8080:8080 samyogg/java-cicd-pipeline:35
+
+```
